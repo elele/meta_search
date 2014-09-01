@@ -216,6 +216,7 @@ module MetaSearch
           raise ArgumentError, "Invalid formatter for #{opts[:name]}, should be a Proc or String."
         end
         opts[:validator] ||= Proc.new {|param| !param.blank?}
+        opts[:validator] ||= validator_for_name(opts[:name])
         unless opts[:validator].respond_to?(:call)
           raise ArgumentError, "Invalid validator for #{opts[:name]}, should be a Proc."
         end
@@ -234,6 +235,16 @@ module MetaSearch
         end
         new(opts[:name])
       end
+
+      def validator_for_name(name)
+        case name.to_sym
+          when :in
+            Proc.new {|param| param.is_a?(Array) && param.reject(&:blank?).present?}
+          else
+            Proc.new {|param| !param.blank?}
+        end
+      end
+
 
       # Takes the provided +where+ param and derives two additional Wheres from it, with the
       # name appended by _any/_all. These will use Arel's grouped predicate methods (matching
